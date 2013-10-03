@@ -1,0 +1,114 @@
+Fujitsu usb touchscreen kernel module and utilities v0.3.5
+by zmiq2 <zzmiq2@gmail.com>, Tue, 20 Jul 2010 18:19:33 +0200
+
+The goal of this project is to produce a useful linux kernel and utilities to use the
+fujitsu usb touchscreen included in tablet laptops like the U810 (aka u1010, u820), 
+the P1620 and the T1010.
+
+This driver has been tested and proved working on a Fujitsu U810 - 32bit, on a
+ Fujitsu P1620 - 64bit and on a Fujitsu T1010 - IA64bit.
+
+For other authorship information, see copyright.
+
+
+
+INSTALLATION
+
+Installation steps detailed here are based on an ubuntu linux distribution. It might
+be different in your system, but they certainly are very easy to adapt to any other
+distribution.
+
+Drop me an email if you have trouble installing the package.
+
+0 set your computer BIOS to use the touchscreen in 'tablet' mode
+  this is the mode also used by windows, and provides very sharp touchscreen accuracy
+
+1 download the package file to any directory
+
+  $ mkdir fujitsu_touchscreen_driver
+  $ cd fujitsu_touchscreen_driver
+  $ wget http://<package location>
+
+2 uncompress the package
+  $ tar zxvf fujitsu-usb-touchscreen-0.3.7.tar.gz
+  $ cd fujitsu-usb-touchscreen-0.3.7
+
+3 install the software
+  $ make
+  $ sudo make install
+  (at this last step you'll be asked for your password to install certain software as
+root user)
+
+4 setup a startup application for automatic touchscreen rotation
+  ubuntu hardy (8.04)
+  once logged into gnome, go to System -> Preferences -> Sessions, and go to the 'Startup Programs' tab, and Add to automatically start /usr/bin/fujitsu_touchscreen_rotate.py at login
+
+  ubuntu jaunty (9.04), ubuntu karmic (10.04)
+  once logged into gnome, go to System -> Preferences -> Startup Applications, and Add to automatically start /usr/bin/fujitsu_touchscreen_rotate.py at login
+
+
+And you are done!!!
+
+NOTE: you'll need to repeat step 3 every time you upgrade your linux kernel to a new version.
+
+
+
+TOUCHSCREEN CALIBRATION
+
+If you feel that the touchscreen calibration is not appropiate, i.e. when clicking on
+a point in the screen the cursor appears in a different point, not under where you are
+clicking, just run the calibration tool provided.
+
+Calibration must be done when screen is in normal orientation; calibrtaion done it this mode
+will make the touchscreen work in all orientations; do not calibrate the screen while
+not in normal mode !
+
+Open a terminal and type:
+
+  $ fujitsu_touchscreen_calibration.py
+
+
+The terminal will start the calibration software. With the laptop stylus, click
+several times on each of the four corners of the viewable screen, not the corners of the
+hardware screen. When you see that the line "last read" doesn't change after clicking
+on the corners, just press S to save the settings and quit.
+
+Also, while in the calibration tool, you can press R to reset current calibration procedure,
+or press Q to quit.
+
+After calibration you can see your calibration values running the following command in
+a terminal window:
+
+  $ dmesg | grep fujitsu_usb_touchscreen | grep loaded
+
+Please report your computer model and calibration values at spareinfo.blogspot.com to
+share with other users.
+
+
+
+OTHER SETUP - SCREEN ROTATION
+
+In order to have the touchscreen automatically rotate when rotating the screen, I
+suggest you also install the fjbtndrv driver package from the ppa.launchpad.net. With
+this package, when pressing the rotate-screen hardware button in the screen bezel in a
+U810, the display will rotate and the touchscreen will act accordingly.
+
+
+
+OTHER SETUP - RIGHT CLICK ON LONG PRESS
+
+In order to have a long-press act as a right-click, configure gnome assistive
+technologies to do so:
+
+ubuntu hardy (8.04)
+1 in gnome, go to System -> Preferences -> Assistive Technologies and select the
+'Enable assistive technologies' check
+
+2 in gnome, go to System -> Preferences -> Mouse, then go to Accessibility tab, and
+select the 'Trigger secondary click by holding down the primary button' option
+
+ubuntu jaunty (9.04)
+1 in gnome, go to System -> Preferences -> Assistive Technologies and select the
+'Mouse Accesibility' option to get into the details
+
+

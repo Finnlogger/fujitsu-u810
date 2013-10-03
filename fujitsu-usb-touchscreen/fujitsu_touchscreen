@@ -1,0 +1,102 @@
+#!/bin/sh -e
+### BEGIN INIT INFO
+# Provides:          fujitsu_touchscreen
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# X-Interactive:     false
+# Short-Description: Start/stop fujitsu_usb_touchscreen module
+### END INIT INFO
+#
+# fujitsu_touchscreen	This init.d script is used to load fujitsu_usb_touchscreen module
+
+# Correct fujitsu_usb_touchscreen module load - start
+# Author:	zmiq2 <zzmiq2@gmail.com>
+# Info:		spareinfo.blogspot.com
+
+#vars
+APPTITLE="Fujitsu touchscreen driver"
+APPNAME=fujitsu_touchscreen
+MODNAME=fujitsu_usb_touchscreen
+DEVICE_UID="/org/freedesktop/Hal/devices/usb_device_430_530_noserial_if0"
+USBHID_PATH=/sys/bus/usb/drivers/usbhid
+
+#utils
+UNAME=/bin/uname
+LSHAL=/usr/bin/lshal
+CUT=/usr/bin/cut
+GREP=/bin/grep
+LS=/bin/ls
+LOGGER=/usr/bin/logger
+RMMOD=/sbin/rmmod
+MODPROBE=/sbin/modprobe
+LSMOD=/bin/lsmod
+
+#check module is compiled
+kversion=`$UNAME --kernel-release`
+
+set +e
+if [ -e /lib/modules/$kversion/extra/$MODNAME.ko ] ; then
+	HAVE_MODULE=1
+else
+	echo "/lib/modules/$kversion/extra/$MODNAME.ko"
+	ERR_MSG="$APPTITLE: ERROR [ERR0] - Module $MODNAME does not exist in /lib/modules/$kversion/extra - Exiting"
+	echo "$ERR_MSG"
+        $LOGGER -i "$ERR_MSG"
+	exit 0
+fi
+
+
+#load/unload module dynamically
+. /lib/lsb/init-functions
+
+case $1 in
+	start|restart|thaw|resume)
+		log_daemon_msg "Starting loading $MODNAME module" "$APPNAME"
+
+                MOD_LOADED=`$LSMOD | $GREP $MODNAME`
+                if [ "x$MOD_LOADED" != "x" ]
+		then
+			$RMMOD $MODNAME
+		fi
+
+		LINUX_SYSFS_PATH=`$LSHAL -u "$DEVICE_UID" | $GREP " linux.sysfs_path" | $CUT -d "'" -f 2`
+		if [ "x$LINUX_SYSFS_PATH" = "x" ]
+		then
+	        	ERR_MSG="$APPTITLE: ERROR [ERR1] - Device $DEVICE_UID not found"
+			echo "$ERR_MSG"
+        		$LOGGER -i "$ERR_MSG"
+                        log_end_msg 1
+			exit 0
+		fi
+
+		USBHID_DEVICES=`$LS $USBHID_PATH/ | $GREP ":"`
+		for dev_path in $USBHID_DEVICES
+		do
+			dev_found=`echo "$LINUX_SYSFS_PATH" | grep "$dev_path"`
+			if [ "x$dev_found" != "x" ]
+			then
+        			ERR_MSG="$APPTITLE: NOTICE - device binded to usbhid - unloading [$dev_found]"
+				echo "$ERR_MSG"
+        			$LOGGER -i "$ERR_MSG"
+				echo -n "$dev_path" > $USBHID_PATH/unbind
+			fi
+		done
+
+		$MODPROBE $MODNAME
+
+                log_end_msg 0
+	;;
+	stop|hibernate|suspend)
+		log_daemon_msg "Starting unloading $MODNAME module" "$APPNAME"
+                MOD_LOADED=`$LSMOD | $GREP $MODNAME`
+                if [ "x$MOD_LOADED" != "x" ]
+		then
+			$RMMOD $MODNAME
+		fi
+                log_end_msg 0
+	;;
+	*)
+		log_success_msg "Usage: /etc/init.d/$APPNAME {start|stop}"
+		exit 1
+	;;
+esac
